@@ -10,12 +10,6 @@ final typeMapping = {};
 // namespace
 class IDLNamespaceDeclaration {
   final String name;
-//  final IDLFunctionDeclaration functionDeclaration;
-//  final List<IDLTypeDeclaration> typeDeclarations;
-//  final IDLEventDeclaration eventDeclaration;
-//  final List<IDLCallbackDeclaration> callbackDeclarations;
-//  final List<IDLEnumDeclaration> enumDeclarations;
-
   // The body will contain one of the above list of types.
   final List body;
   final List<String> documentation;
@@ -29,7 +23,6 @@ class IDLFunctionDeclaration {
   final String name = "Functions";
   final List<IDLMethod> methods;
   final List<String> documentation;
-
   String toString() => "";
 }
 
@@ -64,6 +57,11 @@ class IDLEnumDeclaration {
   String toString() => "";
 }
 
+class IDLAttributeDeclaration {
+  final List<IDLAttribute> values;
+  String toString() => "";
+}
+
 class IDLMethod {
   final String name;
   final List<IDLParameter> parameters;
@@ -82,26 +80,88 @@ class IDLMember {
 class IDLParameter {
   final String name;
   final IDLType type;
+  final bool optional;
   String toString() => "";
 }
 
+// Enumeration of the different types
+// of attributes used in the google
+// apps idls.
+class IDLAttributeTypeEnum {
+
+  final String type;
+
+  const IDLAttributeTypeEnum._(this.type);
+
+  /**
+   * [instanceOf=Window]
+   */
+  static const INSTANCE_OF = const IDLAttributeTypeEnum._("instanceOf");
+
+  /**
+   * [supportsFilters=true]
+   */
+  static const SUPPORTS_FILTER = const IDLAttributeTypeEnum._("supportsFilters");
+
+  /**
+   * [inline_doc]
+   */
+  static const INLINE_DOC = const IDLAttributeTypeEnum._("inline_doc");
+
+  /**
+   * [nodoc]
+   */
+  static const NODOC = const IDLAttributeTypeEnum._("nodoc");
+
+  /**
+   * [nocompile] also sometimes paired with [nocompile, nodoc]
+   */
+  static const NOCOMPILE = const IDLAttributeTypeEnum._("nocompile");
+
+  /**
+   * [legalValues=(16,32)]
+   */
+  static const LEGAL_VALUES = const IDLAttributeTypeEnum._("legalValues");
+
+  /**
+   * [permissions=downloads]
+   */
+  static const PERMISSIONS = const IDLAttributeTypeEnum._("permissions");
+
+  /**
+   * [maxListeners=1]
+   */
+  static const MAX_LISTENERS = const IDLAttributeTypeEnum._("maxListeners");
+}
+
 class IDLAttribute {
+  /**
+   * The type of attribute.
+   */
+  final IDLAttributeTypeEnum attributeType;
+  /**
+   * The possible value used on assignment to the attribute.
+   */
+  final String attributeValue;
+
   String toString() => "";
 }
 
 class IDLEnumValue {
   final String name;
   final String value;
+
   String toString() => "";
 }
 
 class IDLType {
   final String name;
+  final bool isArray;
   String toString() => "";
 }
 
 
-// tood: create methods that return each of the above
+// todo: create methods that return each of the above
 // type when a parser match is found. see mini_ast.dart mapping section
 IDLNamespaceDeclaration idlNamespaceDeclarationMapping(List<String> doc, _,
                                                        String name, List body,
