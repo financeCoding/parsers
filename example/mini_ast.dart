@@ -7,14 +7,23 @@ final reservedNames = ["namespace",
                        "dictionary",
                        "void"];
 
+class AttributeDeclaration {
+  final attribute;
+
+  AttributeDeclaration(this.attribute);
+
+  String toString() => "Attribute($attribute)";
+}
+
 class NamespaceDeclaration {
   final String name;
   final List body;
   final List<String> doc;
+  final AttributeDeclaration attribute;
 
-  NamespaceDeclaration(this.name, this.body, [this.doc]);
+  NamespaceDeclaration(this.name, this.body, [this.doc, this.attribute]);
 
-  String toString() => "NamespaceDeclaration($name, $body, $doc)";
+  String toString() => "$attribute NamespaceDeclaration($name, $body, $doc)";
 }
 
 class InterfaceDeclaration {
@@ -49,10 +58,11 @@ class TypeAppl {
 class Parameter {
   final String name;
   final TypeAppl type;
+  final bool isArray;
 
-  Parameter(this.type, this.name);
+  Parameter(this.type, this.name, [this.isArray = false]);
 
-  String toString() => "Parameter($type, $name)";
+  String toString() => "Parameter($type, $name, isArray: $isArray)";
 }
 
 class MethodDeclaration {
@@ -77,9 +87,14 @@ class FieldDeclaration {
   String toString() => "FieldDeclaration($type, $name, $doc)";
 }
 
-NamespaceDeclaration namespaceDeclarationMapping(List<String> doc, _,
-                                                 String name, List body, __) =>
-    new NamespaceDeclaration(name, body, doc);
+AttributeDeclaration attributeMapping(attribute) =>
+    new AttributeDeclaration(attribute);
+
+NamespaceDeclaration namespaceDeclarationMapping(List<String> doc,
+                                                 AttributeDeclaration attribute,
+                                                 _, String name, List body,
+                                                 __) =>
+    new NamespaceDeclaration(name, body, doc, attribute);
 
 InterfaceDeclaration interfaceDeclarationMapping(List<String> doc, _,
                                                  String name, List body, __) =>
@@ -122,8 +137,13 @@ class DataCoreParser extends LanguageParsers {
       | everythingBetween(string('/*'), string('*/'), nested: true)
       | everythingBetween(string('/**'), string('*/'), nested: true);
 
+  Parser get attribute =>
+      brackets(identifier)
+      ^ attributeMapping;
+
   Parser get namespaceDeclaration =>
       docString
+      + attribute
       + reserved["namespace"]
       + identifier
       + braces(namespaceBody)
@@ -151,10 +171,19 @@ class DataCoreParser extends LanguageParsers {
       + angles(rec(typeAppl).sepBy(comma)).orElse([])
       ^ (c, args) => new TypeAppl(c, args);
 
+  Parser get parameterArray =>
+      identifier  + symbol('[') + symbol(']')
+      ^ (i, _, __) => i;
+
   Parser get parameter =>
-      (typeAppl() % 'type')
+      ((typeAppl() % 'type')
+      + (parameterArray % 'parameter')
+      ^ (t, p) => new Parameter(t, p, true))
+      |
+      ((typeAppl() % 'type')
       + (identifier % 'parameter')
-      ^ (t, p) => new Parameter(t, p);
+      ^ (t, p) => new Parameter(t, p));
+
 
   Parser get regularMethod =>
       docString
@@ -196,12 +225,15 @@ final test = """
 
 // Data core processor package
 // Second comment line
-
+[someattribute]
 namespace datacore {
   // Defined interface of the processor
   interface DataProc {
-    // Loads data for the processor
+    // Loads data for the processor as object array
     bool loadData(array data, int size);
+
+    // Loads data for the processor as int array
+    void load(int data[]);
 
     // Executes the processor
     void run();
