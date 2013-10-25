@@ -81,6 +81,7 @@ class IDLParameter {
   final String name;
   final IDLType type;
   final bool optional;
+  final bool isArray;
   String toString() => "";
 }
 
@@ -156,7 +157,6 @@ class IDLEnumValue {
 
 class IDLType {
   final String name;
-  final bool isArray;
   String toString() => "";
 }
 
